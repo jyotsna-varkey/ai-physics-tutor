@@ -1,0 +1,17 @@
+{
+  "name": "ai-physics-tutor",
+  "version": "1.0.0",
+  "description": "AI-powered adaptive physics tutor for NCERT Class 9 Gravitation",
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "vercel": "^33.0.0"
+  }
+}
