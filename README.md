@@ -97,9 +97,3 @@ ANTHROPIC_API_KEY=your_key_here
 - [ ] Teacher dashboard
 - [ ] Multi-language support
 - [ ] Visual aids (diagrams, animations)
-
-## License
-MIT
-
-## Contact
-[Your contact info]
