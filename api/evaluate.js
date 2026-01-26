@@ -1,4 +1,4 @@
-// Vercel Serverless Function
+// Vercel Serverless Function - OpenRouter with Gemini
 export default async function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -30,14 +30,16 @@ Respond with ONLY the letter (A, B, or C) and a 10-word explanation.
 Format: "B - Understands force but misses mass relationship"`;
 
   try {
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
+        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        'HTTP-Referer': 'https://ai-physics-tutor.vercel.app',
+        'X-Title': 'AI Physics Tutor'
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model: 'google/gemini-2.0-flash-exp:free',
         messages: [{ role: 'user', content: prompt }],
         max_tokens: 100,
         temperature: 0.3
@@ -47,9 +49,9 @@ Format: "B - Understands force but misses mass relationship"`;
     const data = await response.json();
     
     if (!response.ok) {
-      console.error('Groq API error:', data);
+      console.error('OpenRouter API error:', data);
       return res.status(500).json({ 
-        error: 'Groq API failed',
+        error: 'API failed',
         result: 'B - Could not evaluate'
       });
     }
