@@ -1,4 +1,4 @@
-// Vercel Serverless Function
+// Vercel Serverless Function - OpenRouter with Gemini
 export default async function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -15,65 +15,66 @@ export default async function handler(req, res) {
   
   const { conceptName, keyIdeas, formula, userMessage, evaluation, exchangeCount } = req.body;
   
-  const prompt = `You are an expert Socratic physics tutor for Indian Class 9 students. Your goal is to guide students to discover concepts through thoughtful questioning, NOT to lecture.
+  const prompt = `You are an expert Socratic physics tutor for Indian Class 9 students. Your goal is to guide students to discover concepts through thoughtful questioning.
 
-CONCEPT BEING TAUGHT: ${conceptName}
+CONCEPT: ${conceptName}
 ${formula ? 'FORMULA: ' + formula : ''}
 
-CORE CONCEPTS TO GUIDE TOWARDS:
+KEY IDEAS TO GUIDE TOWARDS:
 ${keyIdeas.map((idea, i) => `${i + 1}. ${idea}`).join('\n')}
 
-STUDENT'S PREVIOUS ANSWER: "${userMessage}"
-YOUR EVALUATION OF THEIR ANSWER: ${evaluation.grade} - ${evaluation.explanation}
+STUDENT'S ANSWER: "${userMessage}"
+EVALUATION: ${evaluation.grade} - ${evaluation.explanation}
 
-THIS IS EXCHANGE ${exchangeCount} OF 5
+EXCHANGE: ${exchangeCount} of 5
 
-CRITICAL SOCRATIC TEACHING RULES:
-1. Ask ONE clear, thought-provoking question that builds on their answer
-2. If they're wrong (grade C), DON'T correct them - ask a question that helps them see the issue
-3. If they're partially right (grade B), acknowledge what's correct, then ask about what's missing
-4. If they're fully right (grade A), praise briefly, then ask a deeper question to extend thinking
-5. Use everyday Indian examples (cricket, traffic, cooking, daily life) to make concepts relatable
-6. Keep your response between 40-80 words
-7. NEVER lecture or explain directly - guide through questions only
-8. Build a coherent line of thought - each question should logically follow from the previous exchange
+CRITICAL RULES:
+1. Ask ONE clear question that builds logically from their answer
+2. Grade ${evaluation.grade === 'A' ? '(CORRECT): Praise briefly, then ask a deeper follow-up question' : evaluation.grade === 'B' ? '(PARTIAL): Acknowledge what\'s right, then guide them to what\'s missing with a question' : '(WRONG): DON\'T correct them - ask a guiding question to help them discover the issue'}
+3. Use Indian examples (cricket, daily life, local context)
+4. Keep response 50-90 words
+5. Build a coherent teaching narrative - each question should connect to the previous exchange
+6. NEVER lecture - guide through questions only
 
 ${exchangeCount < 5 ? `
-YOUR TASK FOR EXCHANGE ${exchangeCount}:
-Based on their answer being ${evaluation.grade === 'A' ? 'CORRECT' : evaluation.grade === 'B' ? 'PARTIALLY CORRECT' : 'INCORRECT'}, craft your next Socratic question.
+EXAMPLES OF GOOD RESPONSES:
 
-EXAMPLE GOOD RESPONSES:
-- Grade A: "Exactly! So if gravity pulls objects down, why doesn't the Moon fall to Earth? Think about what else might be happening."
-- Grade B: "You're right about the pull! But what determines HOW STRONG that pull is? Imagine lifting a cricket ball vs a car - what's different?"
-- Grade C: "Interesting thought! Let's test that. If heavier objects fall faster, would a heavy book and a light feather fall at the same speed in a vacuum? Why or why not?"
+If Grade A (correct):
+"Exactly right! Gravity does pull everything down. Now think about this: if gravity pulls the Moon towards Earth, why doesn't the Moon crash into us? What else might be happening?"
 
-Now generate YOUR Socratic question:` : 
-`THIS IS THE FINAL EXCHANGE. Summarize the key insight in ONE sentence, then say: "Let's test your understanding with some questions."
+If Grade B (partial):
+"Good start - you're right that gravity pulls objects! But what makes the pull stronger or weaker? Imagine Earth pulling on a small stone vs. the Sun pulling on Earth - what's different?"
 
-EXAMPLE: "Great work! Remember: all objects attract each other with a force that depends on their masses and distance. Let's test your understanding with some questions."`}
+If Grade C (wrong):
+"Interesting idea! Let's test it. Drop a heavy book and a light pen at the same time. Do they hit the ground at different times? What does that tell you?"
 
-Respond ONLY with your Socratic question or final summary - nothing else:`;
+Now write YOUR Socratic question for this student (50-90 words):` : 
+`THIS IS THE FINAL EXCHANGE. In 1-2 sentences, summarize the key insight they've learned, then say: "Let's test your understanding with some questions."
+
+Example: "Excellent work! You've discovered that gravity is a force between ALL objects - not just Earth pulling things down. The force depends on mass and distance. Let's test your understanding with some questions."`}`;
 
   try {
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
+        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        'HTTP-Referer': 'https://ai-physics-tutor.vercel.app',
+        'X-Title': 'AI Physics Tutor'
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model: 'google/gemini-2.0-flash-exp:free',
         messages: [
           {
             role: 'system',
-            content: 'You are an expert Socratic tutor. You guide students through questions, never lecture. Your responses are 40-80 words, use Indian examples, and build a coherent teaching narrative.'
+            content: 'You are a Socratic tutor. You guide through questions, never lecture. Your responses are 50-90 words and build a coherent teaching narrative.'
           },
           {
             role: 'user',
             content: prompt
           }
         ],
-        max_tokens: 150,
+        max_tokens: 200,
         temperature: 0.7
       })
     });
@@ -81,9 +82,9 @@ Respond ONLY with your Socratic question or final summary - nothing else:`;
     const data = await response.json();
     
     if (!response.ok) {
-      console.error('Groq API error:', data);
+      console.error('OpenRouter API error:', data);
       return res.status(500).json({ 
-        error: 'Groq API failed',
+        error: 'API failed',
         response: exchangeCount < 5 
           ? "Let me ask this differently: Can you explain your reasoning?" 
           : "Let's test your understanding with some questions."
