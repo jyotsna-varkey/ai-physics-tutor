@@ -8,7 +8,7 @@ An adaptive AI tutor for NCERT Class 9 Physics (Gravitation chapter) using Socra
 - ✅ Socratic dialogue with LLM
 - ✅ MCQ validation
 - ✅ Rapid fire challenge
-- ✅ Real-time mastery tracking
+- ✅ Real time mastery tracking
 
 ## Free Deployment on Vercel (₹0 cost)
 
