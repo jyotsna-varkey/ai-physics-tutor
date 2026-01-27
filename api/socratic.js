@@ -69,7 +69,22 @@ Write your question (30-50 words):`;
       });
     }
     
-    const responseText = data.candidates[0].content.parts[0].text;
+    // Check if response exists and is valid
+    if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+      console.error('Invalid Gemini response structure:', JSON.stringify(data));
+      return res.status(500).json({
+        error: 'Invalid response',
+        response: "Let me ask this differently: Can you explain your reasoning?"
+      });
+    }
+    
+    const responseText = data.candidates[0].content.parts[0].text.trim();
+    
+    // Log if response seems incomplete
+    if (responseText.length < 20 || !responseText.includes('?')) {
+      console.log('Warning: Response may be incomplete:', responseText);
+      console.log('Full API response:', JSON.stringify(data));
+    }
     
     return res.status(200).json({ response: responseText });
   } catch (error) {
