@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Physics Tutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: linear-gradient(135deg, #1a0b2e 0%, #16213e 100%);
+            color: #ffffff;
+            min-height: 100vh;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 5%;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            font-weight: 900;
+        }
+
+        .logo span {
+            color: #ff006e;
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .user-name {
+            font-weight: 500;
+        }
+
+        .btn-logout {
+            padding: 0.6rem 1.2rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: #ffffff;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-logout:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 3rem 5%;
+        }
+
+        .welcome {
+            margin-bottom: 3rem;
+        }
+
+        .welcome h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .welcome p {
+            font-size: 1.2rem;
+            color: #c9c9c9;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-5px);
+        }
+
+        .stat-card h3 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #7b2cbf, #ff006e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-card p {
+            color: #c9c9c9;
+            font-size: 0.95rem;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+
+        .concepts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .concept-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .concept-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-5px);
+            border-color: #7b2cbf;
+        }
+
+        .concept-card.completed {
+            border-color: #51cf66;
+        }
+
+        .concept-card.in-progress {
+            border-color: #ff006e;
+        }
+
+        .status-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-badge.completed {
+            background: rgba(81, 207, 102, 0.2);
+            color: #51cf66;
+        }
+
+        .status-badge.in-progress {
+            background: rgba(255, 0, 110, 0.2);
+            color: #ff006e;
+        }
+
+        .status-badge.not-started {
+            background: rgba(255, 255, 255, 0.1);
+            color: #c9c9c9;
+        }
+
+        .concept-card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .concept-card p {
+            color: #c9c9c9;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #7b2cbf, #ff006e);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        .score {
+            font-size: 0.85rem;
+            color: #e0aaff;
+            font-weight: 600;
+        }
+
+        .btn-start {
+            width: 100%;
+            padding: 0.8rem;
+            background: linear-gradient(135deg, #7b2cbf, #ff006e);
+            border: none;
+            border-radius: 10px;
+            color: #ffffff;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-start:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(255, 0, 110, 0.3);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 4rem;
+        }
+
+        .loading p {
+            font-size: 1.2rem;
+            color: #c9c9c9;
+        }
+
+        @media (max-width: 768px) {
+            .welcome h1 {
+                font-size: 2rem;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .concepts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo">Physics<span>Tutor</span></div>
+        <div class="user-menu">
+            <span class="user-name" id="userName">Loading...</span>
+            <button class="btn-logout" onclick="logout()">Logout</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div id="loadingState" class="loading">
+            <p>Loading your progress...</p>
+        </div>
+
+        <div id="dashboardContent" style="display: none;">
+            <div class="welcome">
+                <h1 id="welcomeMessage">Welcome back!</h1>
+                <p>Continue your physics mastery journey</p>
+            </div>
+
+            <div class="stats">
+                <div class="stat-card">
+                    <h3 id="completedCount">0</h3>
+                    <p>Concepts Completed</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="inProgressCount">0</h3>
+                    <p>In Progress</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="avgScore">0%</h3>
+                    <p>Average Score</p>
+                </div>
+            </div>
+
+            <h2 class="section-title">Your Learning Path</h2>
+            <div class="concepts-grid" id="conceptsGrid">
+                <!-- Concepts will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // REPLACE THESE WITH YOUR SUPABASE CREDENTIALS
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const CONCEPTS = [
+            { id: 'universal_law', name: 'Universal Law of Gravitation', description: 'Every object attracts every other object' },
+            { id: 'free_fall', name: 'Free Fall', description: 'Objects falling under gravity alone' },
+            { id: 'acceleration_gravity', name: 'Acceleration due to Gravity (g)', description: 'g ≈ 9.8 m/s²' },
+            { id: mass_weight', name: 'Mass vs Weight', description: 'Understanding the difference' },
+            { id: 'thrust_pressure', name: 'Thrust and Pressure', description: 'Force per unit area' }
+        ];
+
+        let currentUser = null;
+        let userProgress = [];
+
+        async function init() {
+            // Check if user is logged in
+            const { data: { session } } = await supabase.auth.getSession();
+            
+            if (!session) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            currentUser = session.user;
+            
+            // Load user profile and progress
+            await loadUserData();
+        }
+
+        async function loadUserData() {
+            try {
+                // Get user profile
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('full_name')
+                    .eq('id', currentUser.id)
+                    .single();
+
+                const userName = profile?.full_name || currentUser.email.split('@')[0];
+                document.getElementById('userName').textContent = userName;
+                document.getElementById('welcomeMessage').textContent = `Welcome back, ${userName.split(' ')[0]}!`;
+
+                // Get user progress
+                const { data: progress } = await supabase
+                    .from('user_progress')
+                    .select('*')
+                    .eq('user_id', currentUser.id);
+
+                userProgress = progress || [];
+
+                // Calculate stats
+                const completed = userProgress.filter(p => p.status === 'completed').length;
+                const inProgress = userProgress.filter(p => p.status === 'in_progress').length;
+                const avgScore = userProgress.length > 0 
+                    ? Math.round(userProgress.reduce((sum, p) => sum + (p.score || 0), 0) / userProgress.length)
+                    : 0;
+
+                document.getElementById('completedCount').textContent = completed;
+                document.getElementById('inProgressCount').textContent = inProgress;
+                document.getElementById('avgScore').textContent = avgScore + '%';
+
+                // Render concepts
+                renderConcepts();
+
+                // Show dashboard
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('dashboardContent').style.display = 'block';
+
+            } catch (error) {
+                console.error('Error loading user data:', error);
+                alert('Failed to load your data. Please refresh the page.');
+            }
+        }
+
+        function renderConcepts() {
+            const grid = document.getElementById('conceptsGrid');
+            grid.innerHTML = '';
+
+            CONCEPTS.forEach(concept => {
+                const progress = userProgress.find(p => p.concept_id === concept.id);
+                const status = progress?.status || 'not_started';
+                const score = progress?.score || 0;
+                const progressPercent = status === 'completed' ? 100 : status === 'in_progress' ? 50 : 0;
+
+                const card = document.createElement('div');
+                card.className = `concept-card ${status}`;
+                card.innerHTML = `
+                    <span class="status-badge ${status}">${status.replace('_', ' ')}</span>
+                    <h3>${concept.name}</h3>
+                    <p>${concept.description}</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${progressPercent}%"></div>
+                    </div>
+                    <p class="score">${status === 'completed' ? `Score: ${score}%` : status === 'in_progress' ? 'In Progress...' : 'Not Started'}</p>
+                    <button class="btn-start" onclick="startConcept('${concept.id}')">
+                        ${status === 'completed' ? 'Review' : status === 'in_progress' ? 'Continue' : 'Start Learning'}
+                    </button>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function startConcept(conceptId) {
+            window.location.href = `tutor.html?concept=${conceptId}`;
+        }
+
+        async function logout() {
+            await supabase.auth.signOut();
+            window.location.href = 'index.html';
+        }
+
+        // Initialize on page load
+        init();
+    </script>
+</body>
+</html>
