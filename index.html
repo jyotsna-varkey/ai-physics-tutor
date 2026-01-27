@@ -315,6 +315,19 @@ const IntegratedPhysicsTutor = () => {
     }, 500);
   };
 
+  const skipDiagnostics = () => {
+    // Skip diagnostics - learn all concepts
+    const allConcepts = Object.keys(CONCEPT_MAP);
+    setLearningQueue(allConcepts);
+    setPhase('learning');
+    
+    addMessage('assistant', "Starting with all concepts...");
+    
+    setTimeout(() => {
+      startLearningConcept(0, allConcepts);
+    }, 1000);
+  };
+
   const showDiagnosticQuestion = (conceptId) => {
     const mcq = DIAGNOSTIC_MCQs[conceptId];
     setCurrentMCQ({
@@ -487,6 +500,8 @@ const IntegratedPhysicsTutor = () => {
   const evaluateResponse = async (conceptId, userMsg) => {
     const concept = CONCEPT_MAP[conceptId];
     
+    console.log('🔍 Calling /api/evaluate...');
+    
     try {
       const response = await fetch('/api/evaluate', {
         method: 'POST',
@@ -498,19 +513,29 @@ const IntegratedPhysicsTutor = () => {
           userMessage: userMsg
         })
       });
+      
+      console.log('Evaluate response status:', response.status);
+      
       const data = await response.json();
+      console.log('Evaluate response data:', data);
+      
+      if (data.error) {
+        console.error('API returned error:', data.error);
+      }
       
       // Parse result
-      const grade = data.result.charAt(0); // A, B, or C
-      return { grade, explanation: data.result.substring(4) };
+      const grade = data.result?.charAt(0) || 'B';
+      return { grade, explanation: data.result?.substring(4) || 'Could not evaluate' };
     } catch (e) {
-      console.error('Evaluation error:', e);
+      console.error('❌ Evaluation error:', e);
       return { grade: 'B', explanation: 'Could not evaluate' };
     }
   };
 
   const getSocraticResponse = async (conceptId, userMsg, count, evaluation) => {
     const concept = CONCEPT_MAP[conceptId];
+    
+    console.log('🔍 Calling /api/socratic...');
     
     try {
       const response = await fetch('/api/socratic', {
@@ -526,10 +551,21 @@ const IntegratedPhysicsTutor = () => {
           exchangeCount: count
         })
       });
+      
+      console.log('Socratic response status:', response.status);
+      
       const data = await response.json();
-      return data.response;
+      console.log('Socratic response data:', data);
+      
+      if (data.error) {
+        console.error('API returned error:', data.error);
+      }
+      
+      return data.response || (count < 5 
+        ? "Let me ask this differently: Can you explain your reasoning?" 
+        : "Let's test your understanding with some questions.");
     } catch (e) {
-      console.error('Socratic error:', e);
+      console.error('❌ Socratic error:', e);
       return count < 5 
         ? "Let me ask this differently: Can you explain your reasoning?" 
         : "Let's test your understanding with some questions.";
@@ -814,12 +850,20 @@ const IntegratedPhysicsTutor = () => {
       <div className="bg-white border-t p-4 shadow-lg">
         <div className="max-w-4xl mx-auto">
           {phase === 'welcome' && (
-            <button
-              onClick={startDiagnostics}
-              className="w-full py-4 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 text-lg font-semibold"
-            >
-              Start →
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={startDiagnostics}
+                className="flex-1 py-4 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 text-lg font-semibold"
+              >
+                Start Diagnostic →
+              </button>
+              <button
+                onClick={skipDiagnostics}
+                className="py-4 px-6 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 text-lg font-semibold"
+              >
+                Skip
+              </button>
+            </div>
           )}
           
           {inSocraticMode && !currentMCQ && (
