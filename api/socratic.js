@@ -52,7 +52,7 @@ Write your question (30-50 words):`;
         }],
         generationConfig: {
           temperature: 0.7,
-          maxOutputTokens: 200
+          maxOutputTokens: 1000
         }
       })
     });
