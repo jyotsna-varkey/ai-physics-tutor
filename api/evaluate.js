@@ -15,19 +15,31 @@ export default async function handler(req, res) {
   
   const { conceptName, keyIdeas, userMessage } = req.body;
   
-  const prompt = `Evaluate this physics answer:
+  const prompt = `You are evaluating a physics student's answer. Be strict and accurate.
 
-CONCEPT: ${conceptName}
-CORRECT UNDERSTANDING: ${keyIdeas.join('; ')}
-STUDENT ANSWER: "${userMessage}"
+CONCEPT BEING TESTED: ${conceptName}
+WHAT THE STUDENT SHOULD UNDERSTAND: ${keyIdeas.join('; ')}
+STUDENT'S ACTUAL ANSWER: "${userMessage}"
 
-Is the student's answer:
-A) Correct (shows understanding)
-B) Partially correct (has some right ideas but incomplete/mixed with errors)
-C) Incorrect (fundamental misconception)
+EVALUATION TASK:
+Determine if the student's answer demonstrates understanding of the concept.
 
-Respond with ONLY the letter (A, B, or C) and a 10-word explanation.
-Format: "B - Understands force but misses mass relationship"`;
+Grade as:
+- A = Correct: Answer shows clear understanding of the key ideas
+- B = Partially Correct: Answer has some right ideas but is incomplete or has minor errors
+- C = Incorrect: Answer shows fundamental misunderstanding or is completely wrong
+
+OUTPUT REQUIREMENTS:
+- First character MUST be the letter A, B, or C
+- Follow with " - " and then EXACTLY ONE brief explanation (maximum 12 words)
+- No other text, no preamble, no markdown
+
+EXAMPLES:
+"A - Correctly identifies gravity as universal force between masses"
+"B - Understands force concept but misses distance relationship"
+"C - Confuses mass with weight"
+
+Now evaluate this student's answer:`;
 
   try {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`, {
@@ -43,7 +55,7 @@ Format: "B - Understands force but misses mass relationship"`;
         }],
         generationConfig: {
           temperature: 0.3,
-          maxOutputTokens: 100
+          maxOutputTokens: 500
         }
       })
     });
