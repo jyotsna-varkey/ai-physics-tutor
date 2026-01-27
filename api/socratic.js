@@ -1,4 +1,4 @@
-// Vercel Serverless Function - OpenRouter with Gemini
+// Vercel Serverless Function - Google Gemini API
 export default async function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -54,35 +54,28 @@ Now write YOUR Socratic question for this student (50-90 words):` :
 Example: "Excellent work! You've discovered that gravity is a force between ALL objects - not just Earth pulling things down. The force depends on mass and distance. Let's test your understanding with some questions."`}`;
 
   try {
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'HTTP-Referer': 'https://ai-physics-tutor.vercel.app',
-        'X-Title': 'AI Physics Tutor'
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.0-flash-exp:free',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a Socratic tutor. You guide through questions, never lecture. Your responses are 50-90 words and build a coherent teaching narrative.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        max_tokens: 200,
-        temperature: 0.7
+        contents: [{
+          parts: [{
+            text: prompt
+          }]
+        }],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 200
+        }
       })
     });
     
     const data = await response.json();
     
     if (!response.ok) {
-      console.error('OpenRouter API error:', data);
+      console.error('Gemini API error:', data);
       return res.status(500).json({ 
         error: 'API failed',
         response: exchangeCount < 5 
@@ -91,7 +84,7 @@ Example: "Excellent work! You've discovered that gravity is a force between ALL 
       });
     }
     
-    const responseText = data.choices[0].message.content;
+    const responseText = data.candidates[0].content.parts[0].text;
     
     return res.status(200).json({ response: responseText });
   } catch (error) {
