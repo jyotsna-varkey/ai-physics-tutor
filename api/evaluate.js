@@ -1,4 +1,4 @@
-// Vercel Serverless Function - OpenRouter with Gemini
+// Vercel Serverless Function - Google Gemini API
 export default async function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -30,33 +30,35 @@ Respond with ONLY the letter (A, B, or C) and a 10-word explanation.
 Format: "B - Understands force but misses mass relationship"`;
 
   try {
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'HTTP-Referer': 'https://ai-physics-tutor.vercel.app',
-        'X-Title': 'AI Physics Tutor'
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.0-flash-exp:free',
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: 100,
-        temperature: 0.3
+        contents: [{
+          parts: [{
+            text: prompt
+          }]
+        }],
+        generationConfig: {
+          temperature: 0.3,
+          maxOutputTokens: 100
+        }
       })
     });
     
     const data = await response.json();
     
     if (!response.ok) {
-      console.error('OpenRouter API error:', data);
+      console.error('Gemini API error:', data);
       return res.status(500).json({ 
         error: 'API failed',
         result: 'B - Could not evaluate'
       });
     }
     
-    const result = data.choices[0].message.content;
+    const result = data.candidates[0].content.parts[0].text;
     
     return res.status(200).json({ result });
   } catch (error) {
