@@ -200,8 +200,8 @@
 
     <script>
         // REPLACE THESE WITH YOUR SUPABASE CREDENTIALS
-        const SUPABASE_URL = 'https://qcwdcxxclrsatictkfyt.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_7I8GGSIy0L9KwM4CxCf-ZA_Rum2by4B';
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
 
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -225,6 +225,9 @@
             submitBtn.textContent = 'Creating account...';
 
             try {
+                console.log('Attempting signup with:', email);
+                console.log('Supabase URL:', SUPABASE_URL);
+                
                 // Sign up user
                 const { data, error } = await supabase.auth.signUp({
                     email: email,
@@ -236,7 +239,16 @@
                     }
                 });
 
-                if (error) throw error;
+                console.log('Signup response:', { data, error });
+
+                if (error) {
+                    console.error('Supabase error:', error);
+                    throw error;
+                }
+
+                if (!data.user) {
+                    throw new Error('No user returned from signup');
+                }
 
                 showMessage('Account created! Redirecting to dashboard...', 'success');
                 
